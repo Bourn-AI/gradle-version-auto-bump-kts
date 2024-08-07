@@ -20,3 +20,10 @@ Requires matching of "vesion =" for project version to be the first one in the b
 ### `GITHUB_TOKEN`
 
 **Required** The GitHub token.
+
+## Example usage
+```
+  - name: Bump Project Version
+    uses: gregjmarshall/gradle-version-auto-bump-kts@v1
+    with:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
