@@ -1,0 +1,20 @@
+name: 'Gradle Version Bump'
+description: 'Bumps the version in build.gradle.kts'
+inputs:
+  GITHUB_TOKEN:
+    description: 'GitHub token'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: List files for debugging
+      run: ls -al
+      shell: bash
+    - name: Make bump_version.sh executable
+      run: chmod +x ${{github.action_path}}/bump_version.sh
+      shell: bash
+    - run: ${{github.action_path}}/bump_version.sh
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+        
