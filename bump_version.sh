@@ -25,8 +25,8 @@ NEW_VERSION="$MAJOR.$MINOR.$PATCH"
 # Update the version in build.gradle.kts
 sed -i.bak -E "s/version = \".*\"/version = \"$NEW_VERSION\"/" build.gradle.kts
 # Configure git to use the GitHub App identity
-git config --global user.name 'Version Auto Bump App'
-git config --global user.email 'version-auto-bump[bot]@users.noreply.github.com'
+git config --global user.name 'version-auto-bump[bot]'
+git config --global user.email '206832292+version-auto-bump[bot]@users.noreply.github.com'
 # Commit the version bump
 git commit -am "Bump version to $NEW_VERSION"
 # Tag the new version
