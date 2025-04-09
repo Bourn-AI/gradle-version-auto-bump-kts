@@ -24,11 +24,12 @@ fi
 NEW_VERSION="$MAJOR.$MINOR.$PATCH"
 # Update the version in build.gradle.kts
 sed -i.bak -E "s/version = \".*\"/version = \"$NEW_VERSION\"/" build.gradle.kts
+# Configure git to use the GitHub App identity
+git config --global user.name 'Version Auto Bump App'
+git config --global user.email 'version-auto-bump[bot]@users.noreply.github.com'
 # Commit the version bump
-git config --global user.name 'github-actions'
-git config --global user.email 'github-actions@github.com'
 git commit -am "Bump version to $NEW_VERSION"
 # Tag the new version
 git tag -a "v$NEW_VERSION" -m "Release version $NEW_VERSION"
-# Push the changes and tags
-git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" main
+# Push the changes and tags using the GitHub App token
+git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
