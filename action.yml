@@ -1,13 +1,33 @@
 name: 'Gradle Version Bump'
-description: 'Bumps the version in build.gradle.kts and creates date-based tags'
+description: 'Bumps the version in build.gradle.kts and creates customizable tags'
 inputs:
   GITHUB_TOKEN:
     description: 'GitHub token'
     required: true
+  CREATE_VERSION_TAG:
+    description: 'Whether to create standard version tag (vX.Y.Z)'
+    required: false
+    default: 'true'
   CREATE_DATE_TAG:
     description: 'Whether to create date-based tag (vYYYY.MM.DD-version)'
     required: false
     default: 'false'
+  PUSH_VERSION_TAG:
+    description: 'Whether to push the standard version tag to remote'
+    required: false
+    default: 'true'
+  PUSH_DATE_TAG:
+    description: 'Whether to push the date-based tag to remote'
+    required: false
+    default: 'true'
+  DATE_FORMAT:
+    description: 'Format for the date portion of the tag (using date command format)'
+    required: false
+    default: '%Y.%m.%d'
+  TAG_SEPARATOR:
+    description: 'Separator character between date and version'
+    required: false
+    default: '-'
 outputs:
   version:
     description: 'The new version number'
@@ -15,6 +35,9 @@ outputs:
   date_tag:
     description: 'The created date-based tag (if enabled)'
     value: ${{ steps.bump-version.outputs.date_tag }}
+  version_tag:
+    description: 'The created version tag (if enabled)'
+    value: ${{ steps.bump-version.outputs.version_tag }}
 runs:
   using: 'composite'
   steps:
