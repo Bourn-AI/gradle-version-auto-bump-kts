@@ -1,19 +1,35 @@
 name: 'Gradle Version Bump'
-description: 'Bumps the version in build.gradle.kts'
+description: 'Bumps the version in build.gradle.kts and creates date-based tags'
 inputs:
   GITHUB_TOKEN:
     description: 'GitHub token'
     required: true
+  CREATE_DATE_TAG:
+    description: 'Whether to create date-based tag (vYYYY.MM.DD-version)'
+    required: false
+    default: 'false'
+outputs:
+  version:
+    description: 'The new version number'
+    value: ${{ steps.bump-version.outputs.version }}
+  date_tag:
+    description: 'The created date-based tag (if enabled)'
+    value: ${{ steps.bump-version.outputs.date_tag }}
 runs:
   using: 'composite'
   steps:
     - name: List files for debugging
       run: ls -al
       shell: bash
+
     - name: Make bump_version.sh executable
       run: chmod +x ${{github.action_path}}/bump_version.sh
       shell: bash
-    - run: ${{github.action_path}}/bump_version.sh
+
+    - name: Run version bump script
+      id: bump-version
+      run: ${{github.action_path}}/bump_version.sh
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+        CREATE_DATE_TAG: ${{ inputs.CREATE_DATE_TAG }}
