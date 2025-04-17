@@ -11,6 +11,10 @@ echo "PUSH_DATE_TAG: ${PUSH_DATE_TAG}"
 echo "DATE_FORMAT: ${DATE_FORMAT}"
 echo "TAG_SEPARATOR: ${TAG_SEPARATOR}"
 
+# Get the commit that triggered the workflow
+TRIGGER_COMMIT=$(git rev-parse HEAD)
+echo "Original trigger commit: ${TRIGGER_COMMIT}"
+
 # Extract the current version from build.gradle.kts
 CURRENT_VERSION=$(grep 'version =' build.gradle.kts | sed -E 's/.*"(.*)"/\1/')
 echo "Current version: ${CURRENT_VERSION}"
@@ -47,6 +51,8 @@ git config --global user.email '206832292+version-auto-bump[bot]@users.noreply.g
 
 # Commit the version bump
 git commit -am "Bump version to $NEW_VERSION [skip ci]"
+VERSION_BUMP_COMMIT=$(git rev-parse HEAD)
+echo "Version bump commit: ${VERSION_BUMP_COMMIT}"
 
 # Set default values if environment variables are not set
 CREATE_VERSION_TAG="${CREATE_VERSION_TAG:-true}"
@@ -63,10 +69,10 @@ TAGS_TO_PUSH=()
 # Create standard version tag if enabled
 if [[ "$CREATE_VERSION_TAG" == "true" ]]; then
   VERSION_TAG="v$NEW_VERSION"
-  git tag -a "$VERSION_TAG" -m "Release version $NEW_VERSION"
+  git tag -a "$VERSION_TAG" -m "Release version $NEW_VERSION" $TRIGGER_COMMIT
   CREATED_TAGS+=("$VERSION_TAG")
   echo "version_tag=${VERSION_TAG}" >> $GITHUB_OUTPUT
-  echo "Created version tag: ${VERSION_TAG}"
+  echo "Created version tag: ${VERSION_TAG} pointing to original commit"
 
   # Add to push list if push is enabled
   if [[ "$PUSH_VERSION_TAG" == "true" ]]; then
@@ -82,12 +88,12 @@ if [[ "$CREATE_DATE_TAG" == "true" ]]; then
   DATE_TAG="v${DATE_VERSION}${TAG_SEPARATOR}${NEW_VERSION}"
 
   # Create the date-based tag
-  git tag -a "$DATE_TAG" -m "Release version $NEW_VERSION on $(date +'%Y-%m-%d')"
+  git tag -a "$DATE_TAG" -m "Release version $NEW_VERSION on $(date +'%Y-%m-%d')" $TRIGGER_COMMIT
   CREATED_TAGS+=("$DATE_TAG")
 
   # Output the date tag for the action
   echo "date_tag=${DATE_TAG}" >> $GITHUB_OUTPUT
-  echo "Created date-based tag: ${DATE_TAG}"
+  echo "Created date-based tag: ${DATE_TAG} pointing to original commit"
 
   # Add to push list if push is enabled
   if [[ "$PUSH_DATE_TAG" == "true" ]]; then
