@@ -55,4 +55,9 @@ runs:
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+        CREATE_VERSION_TAG: ${{ inputs.CREATE_VERSION_TAG }}
         CREATE_DATE_TAG: ${{ inputs.CREATE_DATE_TAG }}
+        PUSH_VERSION_TAG: ${{ inputs.PUSH_VERSION_TAG }}
+        PUSH_DATE_TAG: ${{ inputs.PUSH_DATE_TAG }}
+        DATE_FORMAT: ${{ inputs.DATE_FORMAT }}
+        TAG_SEPARATOR: ${{ inputs.TAG_SEPARATOR }}

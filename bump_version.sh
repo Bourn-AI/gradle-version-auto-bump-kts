@@ -2,8 +2,18 @@
 # Exit on any error
 set -e
 
+# Debug environment variables
+echo "Debug - Environment variables:"
+echo "CREATE_VERSION_TAG: ${CREATE_VERSION_TAG}"
+echo "CREATE_DATE_TAG: ${CREATE_DATE_TAG}"
+echo "PUSH_VERSION_TAG: ${PUSH_VERSION_TAG}"
+echo "PUSH_DATE_TAG: ${PUSH_DATE_TAG}"
+echo "DATE_FORMAT: ${DATE_FORMAT}"
+echo "TAG_SEPARATOR: ${TAG_SEPARATOR}"
+
 # Extract the current version from build.gradle.kts
 CURRENT_VERSION=$(grep 'version =' build.gradle.kts | sed -E 's/.*"(.*)"/\1/')
+echo "Current version: ${CURRENT_VERSION}"
 
 # Parse the version into major, minor, and patch
 IFS='.' read -r -a VERSION_PARTS <<< "$CURRENT_VERSION"
@@ -26,6 +36,7 @@ fi
 
 # Construct the new version
 NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+echo "New version: ${NEW_VERSION}"
 
 # Update the version in build.gradle.kts
 sed -i.bak -E "s/version = \".*\"/version = \"$NEW_VERSION\"/" build.gradle.kts
@@ -37,7 +48,11 @@ git config --global user.email '206832292+version-auto-bump[bot]@users.noreply.g
 # Commit the version bump
 git commit -am "Bump version to $NEW_VERSION [skip ci]"
 
-# Get the date format and separator from inputs
+# Set default values if environment variables are not set
+CREATE_VERSION_TAG="${CREATE_VERSION_TAG:-true}"
+CREATE_DATE_TAG="${CREATE_DATE_TAG:-false}"
+PUSH_VERSION_TAG="${PUSH_VERSION_TAG:-true}"
+PUSH_DATE_TAG="${PUSH_DATE_TAG:-true}"
 DATE_FORMAT="${DATE_FORMAT:-%Y.%m.%d}"
 TAG_SEPARATOR="${TAG_SEPARATOR:--}"
 
@@ -56,6 +71,7 @@ if [[ "$CREATE_VERSION_TAG" == "true" ]]; then
   # Add to push list if push is enabled
   if [[ "$PUSH_VERSION_TAG" == "true" ]]; then
     TAGS_TO_PUSH+=("$VERSION_TAG")
+    echo "Will push version tag: ${VERSION_TAG}"
   fi
 fi
 
@@ -76,6 +92,7 @@ if [[ "$CREATE_DATE_TAG" == "true" ]]; then
   # Add to push list if push is enabled
   if [[ "$PUSH_DATE_TAG" == "true" ]]; then
     TAGS_TO_PUSH+=("$DATE_TAG")
+    echo "Will push date tag: ${DATE_TAG}"
   fi
 fi
 
@@ -83,6 +100,7 @@ fi
 echo "version=${NEW_VERSION}" >> $GITHUB_OUTPUT
 
 # Push the commits
+echo "Pushing commits to main branch"
 git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
 
 # Push the requested tags if any need to be pushed
@@ -90,10 +108,16 @@ if [ ${#TAGS_TO_PUSH[@]} -gt 0 ]; then
   echo "Pushing tags: ${TAGS_TO_PUSH[*]}"
   for tag in "${TAGS_TO_PUSH[@]}"; do
     echo "Pushing tag: $tag"
-    git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$tag"
+    # Push each tag individually and continue on error
+    git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "refs/tags/$tag" || echo "Failed to push tag: $tag, but continuing..."
   done
 else
   if [ ${#CREATED_TAGS[@]} -gt 0 ]; then
     echo "Tags created but not pushed: ${CREATED_TAGS[*]}"
   fi
 fi
+
+# Debug output for verification
+echo "Final status:"
+echo "Created tags: ${CREATED_TAGS[*]}"
+echo "Pushed tags: ${TAGS_TO_PUSH[*]}"
