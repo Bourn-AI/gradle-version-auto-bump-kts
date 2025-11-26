@@ -42,6 +42,9 @@ fi
 NEW_VERSION="$MAJOR.$MINOR.$PATCH"
 echo "New version: ${NEW_VERSION}"
 
+# Get latest from remote
+git pull origin main
+
 # Update the version in build.gradle.kts
 sed -i.bak -E "s/version = \".*\"/version = \"$NEW_VERSION\"/" build.gradle.kts
 
