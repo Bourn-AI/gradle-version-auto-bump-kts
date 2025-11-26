@@ -49,9 +49,6 @@ sed -i.bak -E "s/version = \".*\"/version = \"$NEW_VERSION\"/" build.gradle.kts
 git config --global user.name 'version-auto-bump[bot]'
 git config --global user.email '206832292+version-auto-bump[bot]@users.noreply.github.com'
 
-# Get latest from remote
-git pull 
-
 # Commit the version bump
 git commit -am "Bump version to $NEW_VERSION [skip ci]"
 VERSION_BUMP_COMMIT=$(git rev-parse HEAD)
