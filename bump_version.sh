@@ -42,15 +42,15 @@ fi
 NEW_VERSION="$MAJOR.$MINOR.$PATCH"
 echo "New version: ${NEW_VERSION}"
 
-# Get latest from remote
-git pull origin main
-
 # Update the version in build.gradle.kts
 sed -i.bak -E "s/version = \".*\"/version = \"$NEW_VERSION\"/" build.gradle.kts
 
 # Configure git to use the GitHub App identity
 git config --global user.name 'version-auto-bump[bot]'
 git config --global user.email '206832292+version-auto-bump[bot]@users.noreply.github.com'
+
+# Get latest from remote
+git pull 
 
 # Commit the version bump
 git commit -am "Bump version to $NEW_VERSION [skip ci]"
