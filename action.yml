@@ -28,6 +28,9 @@ inputs:
     description: 'Separator character between date and version'
     required: false
     default: '-'
+  TARGET_BRANCH:
+    description: 'Branch to push version bump commit to (defaults to GITHUB_REF_NAME or main)'
+    required: false
 outputs:
   version:
     description: 'The new version number'
@@ -61,3 +64,4 @@ runs:
         PUSH_DATE_TAG: ${{ inputs.PUSH_DATE_TAG }}
         DATE_FORMAT: ${{ inputs.DATE_FORMAT }}
         TAG_SEPARATOR: ${{ inputs.TAG_SEPARATOR }}
+        TARGET_BRANCH: ${{ inputs.TARGET_BRANCH }}

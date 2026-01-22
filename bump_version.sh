@@ -62,6 +62,46 @@ PUSH_DATE_TAG="${PUSH_DATE_TAG:-true}"
 DATE_FORMAT="${DATE_FORMAT:-%Y.%m.%d}"
 TAG_SEPARATOR="${TAG_SEPARATOR:--}"
 
+# Determine target branch (default to GITHUB_REF_NAME, fallback to main)
+TARGET_BRANCH="${TARGET_BRANCH:-${GITHUB_REF_NAME:-main}}"
+
+# Validate required environment variables for push
+if [[ -z "${GITHUB_TOKEN}" ]]; then
+  echo "Error: GITHUB_TOKEN is empty; cannot push commits or tags."
+  exit 1
+fi
+if [[ -z "${GITHUB_REPOSITORY}" ]]; then
+  echo "Error: GITHUB_REPOSITORY is empty; cannot construct remote URL."
+  exit 1
+fi
+
+# Configure authenticated remote URL
+AUTH_REMOTE="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+git remote set-url origin "${AUTH_REMOTE}"
+
+# Retry wrapper for git push to handle transient network/API errors
+retry_git_push() {
+  local max_attempts=4
+  local attempt=1
+  local delay=2
+  local cmd=("$@")
+
+  while true; do
+    if "${cmd[@]}"; then
+      return 0
+    fi
+
+    if [[ $attempt -ge $max_attempts ]]; then
+      return 1
+    fi
+
+    echo "Push failed (attempt $attempt/$max_attempts). Retrying in ${delay}s..."
+    sleep "$delay"
+    attempt=$((attempt + 1))
+    delay=$((delay * 2))
+  done
+}
+
 # Initialize tags arrays
 CREATED_TAGS=()
 TAGS_TO_PUSH=()
@@ -106,16 +146,16 @@ fi
 echo "version=${NEW_VERSION}" >> $GITHUB_OUTPUT
 
 # Push the commits
-echo "Pushing commits to main branch"
-git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
+echo "Pushing commits to ${TARGET_BRANCH} branch"
+retry_git_push git push origin "HEAD:${TARGET_BRANCH}"
 
 # Push the requested tags if any need to be pushed
 if [ ${#TAGS_TO_PUSH[@]} -gt 0 ]; then
   echo "Pushing tags: ${TAGS_TO_PUSH[*]}"
   for tag in "${TAGS_TO_PUSH[@]}"; do
     echo "Pushing tag: $tag"
-    # Push each tag individually and continue on error
-    git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "refs/tags/$tag" || echo "Failed to push tag: $tag, but continuing..."
+    # Push each tag individually with retry; continue on error
+    retry_git_push git push origin "refs/tags/$tag" || echo "Failed to push tag: $tag, but continuing..."
   done
 else
   if [ ${#CREATED_TAGS[@]} -gt 0 ]; then
